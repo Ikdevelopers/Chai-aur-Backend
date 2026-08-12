@@ -11,15 +11,20 @@
     "format": "prettier --write .",
     "test": "echo \"No tests yet\" && exit 0"
   },
-  "keywords": ["node", "express", "backend"],
+  "keywords": [
+    "node",
+    "express",
+    "backend"
+  ],
   "author": "",
   "license": "ISC",
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "dotenv": "^16.3.1",
-    "express": "^5.2.1"
+    "dotenv": "^16.6.1",
+    "express": "^5.2.1",
+    "mongoose": "^9.9.2"
   },
   "devDependencies": {
     "eslint": "^8.56.0",

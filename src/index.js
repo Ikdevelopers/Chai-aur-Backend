@@ -1,11 +1,29 @@
-import dotenv from 'dotenv';
-import mongoose from 'mongoose';
 import express from 'express';
-import {DB_NAME} from './constant';
-
+import { connectDb } from './db/index.js';
 const app = express();
 const PORT = process.env.PORT || 8000;
-dotenv.config();
+import dotenv from 'dotenv';
+dotenv.config({
+  path: './env'
+});
+
+/*Method 1 --to connect*/
+try {
+  await connectDb();
+  app.listen(PORT, () => {
+    console.log(`App running on http://localhost:${PORT}`);
+  });
+
+} catch (error) {
+  console.log('Cant run app due to db error: ', error);
+
+}
+
+
+/* Method 2 --to connect
+
+import mongoose from 'mongoose';
+import {DB_NAME} from './constant';
 
 ( async () => {
   try {
@@ -23,5 +41,5 @@ dotenv.config();
     console.error('Error: ', error);
   }
 })();
-
+*/
 

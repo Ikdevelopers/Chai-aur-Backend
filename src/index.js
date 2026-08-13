@@ -8,16 +8,21 @@ dotenv.config({
 });
 
 /*Method 1 --to connect*/
-try {
-  await connectDb();
-  app.listen(PORT, () => {
+  await connectDb()
+  .then(() => {
+    app.listen(PORT, () => {
     console.log(`App running on http://localhost:${PORT}`);
   });
+  })
+  .catch((error) => {
+    console.log('MongoDb connection failed.Erro is: ', error);
+  });
 
-} catch (error) {
-  console.log('Cant run app due to db error: ', error);
 
-}
+  
+
+
+
 
 
 /* Method 2 --to connect

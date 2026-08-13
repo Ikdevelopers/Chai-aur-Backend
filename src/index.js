@@ -10,6 +10,10 @@ dotenv.config({
 /*Method 1 --to connect*/
   await connectDb()
   .then(() => {
+    app.on('Error', (error) => {
+    console.log('Error found in connection of Db: ', error);
+    throw new error;
+   });
     app.listen(PORT, () => {
     console.log(`App running on http://localhost:${PORT}`);
   });

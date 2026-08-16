@@ -22,11 +22,14 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^5.2.1",
-    "mongoose": "^9.9.2"
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.9.2",
+    "mongoose-aggregate-paginate-v2": "^1.1.5"
   },
   "devDependencies": {
     "eslint": "^8.56.0",

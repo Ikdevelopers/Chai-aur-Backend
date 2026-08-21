@@ -1,7 +1,6 @@
 import dns from 'node:dns';
-import express from 'express';
 import { connectDb } from './db/index.js';
-const app = express();
+import app from './app.js';
 const PORT = process.env.PORT || 8000;
 import dotenv from 'dotenv';
 

@@ -18,7 +18,8 @@ const uploadCloudinary = async (localFilePath) => {
             resource_type: 'auto'
         })
         //uploaded
-        console.log(`Uploaded file on cloudinary ${response.url}`);
+       /* console.log(`Uploaded file on cloudinary ${response.url}`);*/
+       fs.unlinkSync(localFilePath)
         return response
     } catch (error) {
         //removing milicious files

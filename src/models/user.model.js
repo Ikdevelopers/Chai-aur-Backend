@@ -50,8 +50,8 @@ const userSchema = new Schema({
 //Saving password
 userSchema.pre('save', async function (next) {
     //Just save pass if it is modified/updated
-    if (this.isModified('password')) {
-        // skipping next code
+    if (!this.isModified('password')) {
+        return;
     }
 
     this.password = await bcrypt.hash(this.password, 10);

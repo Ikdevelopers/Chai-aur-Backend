@@ -35,7 +35,7 @@ dotenv.config({
 /* Method 2 --to connect
 
 import mongoose from 'mongoose';
-import {DB_NAME} from './constant';
+import {DB_NAME} from './constant.js';
 
 ( async () => {
   try {

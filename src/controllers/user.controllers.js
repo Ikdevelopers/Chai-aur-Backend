@@ -182,42 +182,96 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             incomingRefreshToken,
             process.env.REFRESH_TOKEN_SECRET
         )
-    
+
         const user = await User.findById(decodedToken?._id);
         if (!user) {
             throw new ApiError(401, 'Invalid refreshToken, verified by user')
         }
-    
+
         if (incomingRefreshToken !== user?.refreshToken) {
             throw new ApiError(401, 'refreshToken is expired or used')
         }
-    
-        const options= {
+
+        const options = {
             httpOnly: true,
             secure: true
         }
-        
-        const {newRefreshToken, accessToken} = await generateAccessAndRefreshToken(user?._id);
-    
+
+        const { newRefreshToken, accessToken } = await generateAccessAndRefreshToken(user?._id);
+
         return res
-        .status(200)
-        .cookie('accessToken',accessToken, options)
-        .cookie('refreshToken',newRefreshToken, options)
-        .json(
-            new ApiResponse(
-                200,
-                {accessToken, refreshToken: newRefreshToken},
-                'AccessToken refreshed'
+            .status(200)
+            .cookie('accessToken', accessToken, options)
+            .cookie('refreshToken', newRefreshToken, options)
+            .json(
+                new ApiResponse(
+                    200,
+                    { accessToken, refreshToken: newRefreshToken },
+                    'AccessToken refreshed'
+                )
             )
-        )
     } catch (error) {
         throw new ApiError(401, error?.message || 'Invalid refreshtoken')
     }
+})
+
+
+const changeCurrentUserPassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+
+    const user = await User.findById(req.user?._id);
+    const isPasswordCorect = await user.isPasswordCorect(oldPassword);
+    if (!isPasswordCorect) {
+        throw new ApiError(400, 'Invalid old pass')
+    }
+
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false })
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, 'Password changed successfully'))
+})
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res
+        .status(200)
+        .json(200, req.user, 'User fetched successfully.')
+})
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+    const { fullName, email } = req.body;
+
+    if (!(fullName || email)) {
+        throw new ApiError(401, 'fullname and email required for updation')
+    }
+
+    await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            set: {
+                fullName: fullName,
+                email: email
+                /* Alternative
+                fullName,
+                 email
+                 */
+            }
+        },
+        { new: true }
+    ).select('-password')
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, user, 'Account details updated.')
+    )
 })
 
 export default {
     registerUser,
     loginUser,
     logoutUser,
-    refreshAccessToken
+    refreshAccessToken,
+    getCurrentUser
 } 

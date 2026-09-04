@@ -107,7 +107,7 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(404, 'User not found')
     }
 
-    const isPasswordValid = await user.isPasswordCorect(password);
+    const isPasswordValid = await user.isPasswordCorrect(password);
 
     if (!isPasswordValid) {
         throw new ApiError(404, 'Password invalid')
@@ -116,8 +116,8 @@ const loginUser = asyncHandler(async (req, res) => {
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
 
     //again running server's db query for getting real user to gain real tokens
-    const loggedInUser = await User.findById(user._id).
-        select("-password, -refreshToken")
+    const loggedInUser = await User.findById(user._id)
+        .select("-password -refreshToken")
 
     const options = {
         httpOnly: true,
@@ -197,7 +197,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             secure: true
         }
 
-        const { newRefreshToken, accessToken } = await generateAccessAndRefreshToken(user?._id);
+        const { accessToken, refreshToken: newRefreshToken } = await generateAccessAndRefreshToken(user?._id);
 
         return res
             .status(200)
@@ -236,7 +236,7 @@ const changeCurrentUserPassword = asyncHandler(async (req, res) => {
 const getCurrentUser = asyncHandler(async (req, res) => {
     return res
         .status(200)
-        .json(200, req.user, 'User fetched successfully.')
+        .json(new ApiResponse(200, req.user, 'User fetched successfully.'))
 })
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
@@ -246,10 +246,10 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
         throw new ApiError(401, 'fullname and email required for updation')
     }
 
-    await User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
-            set: {
+            $set: {
                 fullName: fullName,
                 email: email
                 /* Alternative
@@ -262,10 +262,70 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     ).select('-password')
 
     return res
+        .status(200)
+        .json(
+            new ApiResponse(200, user, 'Account details updated.')
+        )
+})
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+    const avatarLocalPath = await req.file?.path
+    if (!avatarLocalPath) {
+        throw new ApiError(400, 'Avatar file is missing')
+    }
+
+    const avatar = await uploadCloudinary(avatarLocalPath);
+
+    if (!avatar.url) {
+        throw new ApiError(400, 'Error while uploding on avatar')
+    }
+
+    const user =  await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                avatar: avatar.url
+            }
+        },
+        { new: true }
+    ).select('-password')
+
+    return res
     .status(200)
     .json(
-        new ApiResponse(200, user, 'Account details updated.')
-    )
+        new ApiResponse(200, user, 'Cover Image updated.')
+    ).select('-password')
+
+})
+
+const updateUserCover = asyncHandler(async (req, res) => {
+    const coverLocalPath = await req.file?.path
+    if (!coverLocalPath) {
+        throw new ApiError(400, 'Cover file is missing')
+    }
+
+    const coverImage = await uploadCloudinary(coverLocalPath);
+
+    if (!coverImage.url) {
+        throw new ApiError(400, 'Error while uploding on CoverImage')
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                coverImage: coverImage.url
+            }
+        },
+        { new: true }
+    ).select('-password')
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, user, 'Cover Image updated.')
+    ).select('-password')
+
 })
 
 export default {
@@ -273,5 +333,9 @@ export default {
     loginUser,
     logoutUser,
     refreshAccessToken,
-    getCurrentUser
+    getCurrentUser,
+    updateAccountDetails,
+    changeCurrentUserPassword,
+    updateUserAvatar,
+    updateUserCover
 } 

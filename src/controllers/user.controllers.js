@@ -4,6 +4,7 @@ import { User } from '../models/user.model.js';
 import { deleteCloudinary, uploadCloudinary } from '../utils/cloudinary.js';
 import jwt from 'jsonwebtoken'
 import { ApiResponse } from '../utils/ApiResponse.js'
+import mongoose from 'mongoose';
 const generateAccessAndRefreshToken = async (userId) => {
     try {
         const user = await User.findById(userId);
@@ -300,10 +301,10 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     await deleteCloudinary(oldAvatarPublicId)
 
     return res
-    .status(200)
-    .json(
-        new ApiResponse(200, user, 'Avatar updated.')
-    )
+        .status(200)
+        .json(
+            new ApiResponse(200, user, 'Avatar updated.')
+        )
 
 })
 
@@ -338,15 +339,15 @@ const updateUserCover = asyncHandler(async (req, res) => {
     await deleteCloudinary(oldCoverImagePublicId)
 
     return res
-    .status(200)
-    .json(
-        new ApiResponse(200, user, 'Cover Image updated.')
-    )
+        .status(200)
+        .json(
+            new ApiResponse(200, user, 'Cover Image updated.')
+        )
 
 })
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
-    const {username} = req.params;
+    const { username } = req.params;
     if (!username?.trim()) {
         throw new ApiError(400, 'User name is required')
     }
@@ -357,13 +358,13 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                 username: username?.toLowerCase()
             },
             $lookup: {
-                from :subscriptions,
+                from: subscriptions,
                 localField: '_id',
                 foreignField: 'channel',
                 as: subscriber
             },
             $lookup: {
-                from :subscriptions,
+                from: subscriptions,
                 localField: '_id',
                 foreignField: 'subscriber',
                 as: subscribedTo
@@ -373,11 +374,11 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                     $size: '$subscribers'
                 },
                 channelsSubscribedToCount: {
-                    $size:  '$subscribedTo'
+                    $size: '$subscribedTo'
                 },
                 isSubscribed: {
                     $cond: {
-                        if: {$in: [req.user?._id, '$subscribers.subscriber']},
+                        if: { $in: [req.user?._id, '$subscribers.subscriber'] },
                         then: true,
                         else: false
                     }
@@ -386,22 +387,68 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
             $project: {
                 fullName: 1,
                 username: 1,
-                subscribersCount:1,
-                channelsSubscribedToCount:1,
-                isSubscribed:1,
-                coverImage:1,
-                avatar:1,
-                email:1
+                subscribersCount: 1,
+                channelsSubscribedToCount: 1,
+                isSubscribed: 1,
+                coverImage: 1,
+                avatar: 1,
+                email: 1
             }
         }
-         
+
     ])
     if (!channel?.length) {
         throw new ApiError(404, 'Channel does not exixst')
     }
     return res
+        .status(200)
+        .json(new ApiResponse(200, 'Channel fetched successfully.'))
+})
+
+const getWatchHistory = asyncHandler(async (req, res) => {
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id : new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup: {
+                from: 'videos',
+                localField: 'watchHistory',
+                foreignField: '_id',
+                as: 'watchHistory',
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: 'users',
+                            localField: 'owner',
+                            owner: '_id',
+                            pipeline: [{
+                                $project: {
+                                    fullName: 1,
+                                    username: 1,
+                                    avatar: 1
+                                }
+                            }]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner:{
+                                $first: '$owner'
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    return res
     .status(200)
-    .json( new ApiResponse( 200, 'Channel fetched successfully.'))
+    .json(new ApiResponse(200, user[0].watchHistory,'Watch History done'))
+
 })
 
 export default {
@@ -414,5 +461,6 @@ export default {
     changeCurrentUserPassword,
     updateUserAvatar,
     updateUserCover,
-    getUserChannelProfile
+    getUserChannelProfile,
+    getWatchHistory
 } 
